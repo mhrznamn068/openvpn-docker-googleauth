@@ -1,0 +1,20 @@
+version: '3.7'
+services:
+  openvpn:
+    image: openvpn/openvpn
+    build:
+      context: .
+      dockerfile: Dockerfile.OpenVPN
+    container_name: openvpn
+    cap_add:
+        - NET_ADMIN
+    ports:
+        - ${HOST_SSL_PORT}:${HOST_SSL_PORT}/udp
+    env_file:
+        - ./.env
+    restart: always
+    volumes:
+      - openvpn_config:/etc/openvpn
+
+volumes:
+  openvpn_config:

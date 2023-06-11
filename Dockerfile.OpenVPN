@@ -1,0 +1,37 @@
+FROM ubuntu:20.04
+
+USER root
+
+LABEL maintainer="Aman Maharjan <mhrznamn068@gmail.com>"
+
+ENV TZ=Asia/Kathmandu
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+ENV SERVER_USER=vpnserver
+RUN apt-get update -y && apt-get upgrade -y && useradd -m ${SERVER_USER} && mkdir -p /home/${SERVER_USER}/clients \
+    && addgroup gauth && useradd -g gauth gauth && mkdir -p /etc/openvpn/google-authenticator \
+    && chown gauth:gauth /etc/openvpn/google-authenticator \
+    && chmod 0700 /etc/openvpn/google-authenticator
+
+RUN DEBIAN_FRONTEND=noninteractive apt install -y openvpn easy-rsa sed mysql-client git curl iptables vim libpam-google-authenticator libqrencode4
+
+COPY ./openvpn/server.conf /etc/openvpn/
+COPY ./openvpn/client-base.conf /home/${SERVER_USER}/clients/base.conf
+COPY ./openvpn/genclient.sh /home/${SERVER_USER}/
+COPY ./openvpn/pam-openvpn /etc/pam.d/openvpn
+RUN chmod +x /home/${SERVER_USER}/genclient.sh \
+    && chmod 0644 /etc/pam.d/openvpn \
+    && chown root:root /etc/pam.d/openvpn
+
+# Get the rsa keys
+WORKDIR /home/${SERVER_USER}/
+RUN curl -L "https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.6/EasyRSA-unix-v3.0.6.tgz" -O && \
+    tar -xaf "EasyRSA-unix-v3.0.6.tgz" && mv "EasyRSA-v3.0.6" /etc/openvpn/easy-rsa &&rm "EasyRSA-unix-v3.0.6.tgz"
+
+COPY ./openvpn/docker-entrypoint.sh /usr/local/bin
+
+# Make ip forwading and make it persistent
+RUN echo "net.ipv4.ip_forward = 1" >> "/etc/sysctl.conf"
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+#CMD [ "tail -f /dev/null" ]

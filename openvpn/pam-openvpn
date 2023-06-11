@@ -1,0 +1,2 @@
+auth optional pam_unix.so
+auth optional /lib/x86_64-linux-gnu/security/pam_google_authenticator.so secret=/etc/openvpn/google-authenticator/${USER} user=gauth try_first_pass
