@@ -21,7 +21,8 @@ COPY ./openvpn/genclient.sh /home/${SERVER_USER}/
 COPY ./openvpn/pam-openvpn /etc/pam.d/openvpn
 RUN chmod +x /home/${SERVER_USER}/genclient.sh \
     && chmod 0644 /etc/pam.d/openvpn \
-    && chown root:root /etc/pam.d/openvpn
+    && chown root:root /etc/pam.d/openvpn \
+    && touch /etc/openvpn/server-push-route.conf
 
 # Get the rsa keys
 WORKDIR /home/${SERVER_USER}/
